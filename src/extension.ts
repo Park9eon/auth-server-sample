@@ -1,7 +1,6 @@
 import {Response, NextFunction} from "express";
 import {Observable, Subscription} from "rx";
 import {db} from "./db";
-import * as createHttpError from "http-errors";
 
 const Connection = require("mysql/lib/Connection");
 

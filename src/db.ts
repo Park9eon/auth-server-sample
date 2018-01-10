@@ -12,11 +12,11 @@ export function configDB() {
         database: process.env.MYSQL_DB
     });
     // 커넥션 생성시 로깅
-    connectionPool.on("connection", function (connection) {
+    connectionPool.on("connection", connection => {
         console.log(`Connection ${connection.threadId} connected`);
     });
     // 릴리즈 성공시 로깅
-    connectionPool.on("release", function (connection) {
+    connectionPool.on("release", connection => {
         console.log(`Connection ${connection.threadId} released`);
     });
 }

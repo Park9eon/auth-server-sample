@@ -6,9 +6,8 @@ import {OAuth2Strategy as GoogleStrategy} from "passport-google-oauth";
 import {Strategy as FacebookStrategy} from "passport-facebook";
 import * as createHttpError from "http-errors";
 import {userService} from "./service/userService";
-
-const KakaoStrategy = require("passport-kakao").Strategy;
-const NaverStrategy = require("passport-naver").Strategy;
+import {Strategy as KakaoStrategy} from "passport-kakao";
+import {Strategy as NaverStrategy} from "passport-naver";
 
 export const basicAuthorize = (req: Request, res: Response, next: NextFunction) => {
     return authenticate("basic", (err: any, user: any, authInfo: any) => {
@@ -94,7 +93,7 @@ export function configPassport(app: Application) {
     app.use(initialize());
     use(new BasicStrategy((username, password, done: (err?: any, profile?: any) => void) => {
         userService.certification({
-            username: username,
+            username,
             credentials: password
         }, "password")
             .subscribe((user: any) => {
@@ -103,14 +102,9 @@ export function configPassport(app: Application) {
                 done(err);
             });
     }));
-    // use(new BearerStrategy(process.env.SECRET, (token: any, done: (err?: any, result?: any) => void) => {
-    //     userService.getByToken(token)
-    //         .subscribe((user) => {
-    //             done(null, user);
-    //         }, err => {
-    //             done(err);
-    //         });
-    // }));
+    use(new BearerStrategy(process.env.SECRET, (token: any, done: (err?: any, result?: any) => void) => {
+        done(null, token);
+    }));
     use(new GoogleStrategy({
             clientID: process.env.GOOGLE_CLIENT_ID,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET,
@@ -146,6 +140,7 @@ export function configPassport(app: Application) {
             callbackURL: "http://localhost:3000/auth/kakao/callback"
         },
         (accessToken: any, refreshToken: any, profile: any, done: any) => {
+            console.log(profile);
             userService.certification(profile, "kakao")
                 .subscribe((user: any) => {
                     done(null, user);
