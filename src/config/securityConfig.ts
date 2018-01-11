@@ -1,95 +1,14 @@
-import {Application, NextFunction, Request, Response} from "express";
-import {authenticate, initialize, use} from "passport";
+import {Application} from "express";
+import {initialize, use} from "passport";
 import {BasicStrategy} from "passport-http";
 import {Strategy as BearerStrategy} from "passport-http-bearer";
 import {OAuth2Strategy as GoogleStrategy} from "passport-google-oauth";
 import {Strategy as FacebookStrategy} from "passport-facebook";
-import * as createHttpError from "http-errors";
-import {userService} from "./service/userService";
+import {userService} from "../service/userService";
 import {Strategy as KakaoStrategy} from "passport-kakao";
 import {Strategy as NaverStrategy} from "passport-naver";
 
-export const basicAuthorize = (req: Request, res: Response, next: NextFunction) => {
-    return authenticate("basic", (err: any, user: any, authInfo: any) => {
-        if (err || user === false) {
-            next(createHttpError(401));
-        } else {
-            req.authInfo = authInfo;
-            req.user = user;
-            next();
-        }
-    })(req, res, next);
-};
-
-export const bearAuthorize = (req: Request, res: Response, next: NextFunction) => {
-    return authenticate("bearer", (err: any, user: any, authInfo: any) => {
-        if (err || user === false) {
-            next(createHttpError(401));
-        } else {
-            req.authInfo = authInfo;
-            req.user = user;
-            next();
-        }
-    })(req, res, next);
-};
-
-export const googleBasicAuthorize = authenticate("google", {scope: ["profile", "email"]});
-
-export const googleBearerAuthorize = (req: Request, res: Response, next: NextFunction) => {
-    return authenticate("google", (err: any, user: any, authInfo: any) => {
-        if (err || user === false) {
-            next(createHttpError(401));
-        } else {
-            req.authInfo = authInfo;
-            req.user = user;
-            next();
-        }
-    })(req, res, next);
-};
-
-export const facebookBasicAuthorize = authenticate("facebook", {scope: ["email"]});
-
-export const facebookBearerAuthorize = (req: Request, res: Response, next: NextFunction) => {
-    return authenticate("facebook", (err: any, user: any, authInfo: any) => {
-        if (err || user === false) {
-            next(createHttpError(401));
-        } else {
-            req.authInfo = authInfo;
-            req.user = user;
-            next();
-        }
-    })(req, res, next);
-};
-
-export const kakaoBasicAuthorize = authenticate("kakao", {scope: [""]});
-
-export const kakaoBearerAuthorize = (req: Request, res: Response, next: NextFunction) => {
-    return authenticate("kakao", (err: any, user: any, authInfo: any) => {
-        if (err || user === false) {
-            next(createHttpError(401));
-        } else {
-            req.authInfo = authInfo;
-            req.user = user;
-            next();
-        }
-    })(req, res, next);
-};
-
-export const naverBasicAuthorize = authenticate("naver");
-
-export const naverBearerAuthorize = (req: Request, res: Response, next: NextFunction) => {
-    return authenticate("naver", (err: any, user: any, authInfo: any) => {
-        if (err || user === false) {
-            next(createHttpError(401));
-        } else {
-            req.authInfo = authInfo;
-            req.user = user;
-            next();
-        }
-    })(req, res, next);
-};
-
-export function configPassport(app: Application) {
+export function securityConfig(app: Application) {
     app.use(initialize());
     use(new BasicStrategy((username, password, done: (err?: any, profile?: any) => void) => {
         userService.certification({

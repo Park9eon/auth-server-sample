@@ -1,14 +1,12 @@
 import {Observable} from "rx";
-import {compareSync, hashSync} from "bcrypt-nodejs";
-import {db} from "../db";
-import {sign, verify} from "jsonwebtoken";
+import {compareSync} from "bcrypt-nodejs";
+import {dataSource} from "../dataSource";
 import {PoolConnection} from "mysql";
 
-export namespace userService {
-
-    function findOne(key: string, value: any, connection?: PoolConnection): Observable<any> {
+export class UserService {
+    private findOne(key: string, value: any, connection?: PoolConnection): Observable<any> {
         // language=MySQL
-        return db.query(`SELECT
+        return dataSource.query(`SELECT
                            id,
                            username
                          FROM user
@@ -16,18 +14,18 @@ export namespace userService {
             .toJSON();
     }
 
-    export function findById(id: number, connection?: PoolConnection): Observable<any> {
-        return findOne("id", id, connection);
+    findById(id: number, connection?: PoolConnection): Observable<any> {
+        return this.findOne("id", id, connection);
     }
 
-    export function findByUsername(username: string, connection?: PoolConnection): Observable<any> {
-        return findOne("username", username, connection);
+    findByUsername(username: string, connection?: PoolConnection): Observable<any> {
+        return this.findOne("username", username, connection);
     }
 
-    function findUserAndCredentials(key: string, value: any, grantType: string): Observable<any> {
+    findUserAndCredentials(key: string, value: any, grantType: string): Observable<any> {
         console.log([key, value, grantType]);
         // language=MySQL
-        return db.query(`SELECT
+        return dataSource.query(`SELECT
                            u.id,
                            u.username,
                            uc.grant_type,
@@ -44,19 +42,19 @@ export namespace userService {
     }
 
     // 유저정보 기반 유저와 인증정보를 가져옴
-    export function findByUsernameAndGrantType(username: string, grantType: string): Observable<any> {
-        return findUserAndCredentials("username", username, grantType);
+    findByUsernameAndGrantType(username: string, grantType: string): Observable<any> {
+        return this.findUserAndCredentials("username", username, grantType);
     }
 
     // 인증정보기반으로 유저와 인증정보를 가져옴
-    export function findByCredentialsAndGrantType(credentials: string, grantType: string): Observable<any> {
-        return findUserAndCredentials("credentials", credentials, grantType);
+    findByCredentialsAndGrantType(credentials: string, grantType: string): Observable<any> {
+        return this.findUserAndCredentials("credentials", credentials, grantType);
     }
 
-    export function certification(profile: any, grantType: string): Observable<any> {
+    certification(profile: any, grantType: string): Observable<any> {
         switch (grantType) {
             case "password": {
-                return findByUsernameAndGrantType(profile.username, grantType)
+                return this.findByUsernameAndGrantType(profile.username, grantType)
                     .flatMap((user: any) => {
                         if (compareSync(profile.password, user.credential)) {
                             return Observable.just(user);
@@ -66,26 +64,28 @@ export namespace userService {
                     });
             }
             default : {
-                return findByCredentialsAndGrantType(profile.id, grantType);
+                return this.findByCredentialsAndGrantType(profile.id, grantType);
             }
         }
     }
 
-    export function create(user: any, grantType: string): Observable<any> {
-        return db.beginTransaction((connection: PoolConnection) => {
+    create(user: any, grantType: string): Observable<any> {
+        return dataSource.beginTransaction((connection: PoolConnection) => {
             // language=MySQL
-            return db.query(`INSERT INTO user (username, created) VALUES (?, NOW());`,
+            return dataSource.query(`INSERT INTO user (username, created) VALUES (?, NOW());`,
                 [user.username],
                 connection)
                 .flatMap(result => {
                     let userId = result[0].insertId;
-                    return db.query(`INSERT INTO user_credentials (user_id, grant_type, credentials) VALUES (?, ?, ?)`,
+                    return dataSource.query(`INSERT INTO user_credentials (user_id, grant_type, credentials) VALUES (?, ?, ?)`,
                         [userId, grantType, user.credentials],
                         connection);
                 })
                 .flatMap(() => {
-                    return findByUsername(user.username, connection);
+                    return this.findByUsername(user.username, connection);
                 });
         });
     }
 }
+
+export const userService = new UserService();

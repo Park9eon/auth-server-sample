@@ -1,22 +1,14 @@
 import {Router} from "express";
 import {
-    bearAuthorize,
-    basicAuthorize,
-    googleBasicAuthorize,
-    googleBearerAuthorize,
-    facebookBasicAuthorize,
-    facebookBearerAuthorize,
-    kakaoBasicAuthorize,
-    kakaoBearerAuthorize,
-    naverBasicAuthorize,
-    naverBearerAuthorize
-} from "../passport";
-import {userController} from "./userController";
+    basicAuthorize, bearAuthorize, facebookBasicAuthorize, facebookBearerAuthorize, googleBasicAuthorize,
+    googleBearerAuthorize, kakaoBasicAuthorize, kakaoBearerAuthorize, naverBasicAuthorize, naverBearerAuthorize
+} from "./middleware";
+import {userController} from "../controller/userController";
 
 export let userRouter = Router();
 
 userRouter.all(["/", "/me"], bearAuthorize, userController.me);
-// userRouter.get("/auth", basicAuthorize, userController.login);
+userRouter.get("/auth", basicAuthorize, userController.login);
 userRouter.get("/auth/callback", basicAuthorize, userController.auth);
 
 userRouter.get("/auth/google", googleBasicAuthorize);
